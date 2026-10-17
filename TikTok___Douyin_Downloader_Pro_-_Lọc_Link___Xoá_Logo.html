@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Quan trọng: Giúp trình duyệt phát và tải luồng video Douyin/TikTok CDN không bị lỗi 403 Forbidden -->
+    <meta name="referrer" content="no-referrer">
+    <title>TikDouyin Pro v3 - Tự Động Lọc Link Rác & Tải Video Không Logo Đa Server</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        tiktok: {
+                            cyan: '#00f2fe',
+                            pink: '#fe0979',
+                            red: '#ff0050',
+                            dark: '#080b12',
+                            card: '#111624',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080b12;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Hiệu ứng Glassmorphism */
+        .glass-panel {
+            background: rgba(17, 22, 36, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+        }
+        .glass-card {
+            background: rgba(28, 35, 56, 0.55);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        /* Nút Gradient thương hiệu TikTok / Douyin */
+        .btn-tiktok {
+            background: linear-gradient(90deg, #00f2fe 0%, #fe0979 100%);
+            transition: all 0.25s ease;
+        }
+        .btn-tiktok:hover {
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.45), 0 0 25px rgba(254, 9, 121, 0.45);
+            transform: translateY(-1px);
+        }
+        .btn-tiktok:active {
+            transform: translateY(1px);
+        }
+        /* Viền phát sáng khi focus */
+        .input-glow:focus-within {
+            border-color: #00f2fe;
+            box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15), 0 0 22px rgba(254, 9, 121, 0.15);
+        }
+        /* Thanh cuộn tuỳ chỉnh */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080b12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #252e46;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-tiktok-pink selection:text-white">
+
+    <!-- Hạt sáng nền trang trí (Ambient Glow Background) -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-tiktok-cyan/15 rounded-full blur-[130px] animate-pulse-slow"></div>
+        <div class="absolute top-1/3 -right-32 w-96 h-96 bg-tiktok-pink/15 rounded-full blur-[130px] animate-pulse-slow" style="animation-delay: 2s;"></div>
+        <div class="absolute -bottom-32 left-1/3 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]"></div>
+    </div>
+
+    <!-- Thanh điều hướng (Header) -->
+    <header class="relative z-20 border-b border-white/10 glass-panel sticky top-0">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                <div class="w-10 h-10 rounded-xl btn-tiktok p-0.5 flex items-center justify-center shadow-lg">
+                    <div class="w-full h-full bg-tiktok-dark rounded-[10px] flex items-center justify-center">
+                        <i class="fa-brands fa-tiktok text-xl bg-gradient-to-tr from-tiktok-cyan to-tiktok-pink bg-clip-text text-transparent"></i>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white">TikDouyin<span class="text-tiktok-cyan">Pro</span></span>
+                    <span class="hidden sm:inline-block ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">v3.0 Multi-Server</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
+                <button onclick="switchTab('single')" id="nav-single" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-white/10 text-white transition">
+                    <i class="fa-solid fa-wand-magic-sparkles text-tiktok-cyan mr-1"></i> Tải & Lọc Đơn
+                </button>
+                <button onclick="switchTab('bulk')" id="nav-bulk" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition">
+                    <i class="fa-solid fa-layer-group text-tiktok-pink mr-1"></i> Tải Hàng Loạt
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition relative" title="Lịch sử đã tải">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i>
+                    <span class="hidden sm:inline">Lịch sử</span>
+                    <span id="historyBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-tiktok-pink text-[10px] font-bold text-white">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Nội dung chính -->
+    <main class="relative z-10 flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+        
+        <!-- Tiêu đề Hero -->
+        <section class="text-center space-y-2 max-w-2xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-tiktok-cyan">
+                <i class="fa-solid fa-server"></i>
+                <span>Hệ thống 5 Server tự động chuyển luồng • Vượt tường lửa Douyin & TikTok CDN</span>
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                Tải Video Không Logo <span class="bg-gradient-to-r from-tiktok-cyan via-purple-400 to-tiktok-pink bg-clip-text text-transparent">TikTok & Douyin</span>
+            </h1>
+            <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Dán nguyên đoạn văn bản chia sẻ (kể cả chữ tiếng Trung `1.53 复制打开抖音...`), công cụ sẽ <strong>tự động lọc lấy link gốc sạch</strong> và dùng 5 cổng Server dự phòng để tải thẳng file MP4 HD về máy.
+            </p>
+        </section>
+
+        <!-- Thanh chuyển đổi 3 chế độ (Tabs) -->
+        <div class="max-w-4xl mx-auto">
+            <div class="grid grid-cols-3 p-1 rounded-xl glass-panel mb-5 max-w-md mx-auto">
+                <button id="tabBtnSingle" onclick="switchTab('single')" class="py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-gradient-to-r from-tiktok-cyan/20 to-tiktok-pink/20 text-white border border-white/15 shadow">
+                    <i class="fa-solid fa-link mr-1 text-tiktok-cyan"></i> Link Đơn
+                </button>
+                <button id="tabBtnBulk" onclick="switchTab('bulk')" class="py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-list-check mr-1 text-tiktok-pink"></i> Hàng Loạt
+                </button>
+                <button id="tabBtnHistory" onclick="switchTab('history')" class="py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-clock-rotate-left mr-1 text-purple-400"></i> Lịch Sử
+                </button>
+            </div>
+
+            <!-- ================= TAB 1: TẢI & LỌC LINK ĐƠN ================= -->
+            <div id="sectionSingle" class="space-y-5">
+                <div class="glass-panel p-4 sm:p-5 rounded-2xl shadow-2xl space-y-3.5">
+                    
+                    <!-- Hàng trạng thái nhận diện nền tảng & Các nút Test nhanh -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-slate-400 font-medium">Dán đoạn chia sẻ chứa link:</span>
+                            <span id="platformBadgeSingle" class="hidden px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px]"></span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button 
+                                type="button"
+                                onclick="testSampleDouyin()" 
+                                class="px-2.5 py-1 rounded-lg bg-tiktok-pink/15 hover:bg-tiktok-pink/25 text-tiktok-pink border border-tiktok-pink/30 font-semibold transition flex items-center"
+                                title="Tự động điền chuỗi Douyin của bạn, lọc chữ thừa và tải ngay"
+                            >
+                                <i class="fa-solid fa-bolt mr-1.5"></i> Thử link Douyin của bạn (qdm32mj3l8Q)
+                            </button>
+                            <button 
+                                type="button"
+                                onclick="testSampleTikTok()" 
+                                class="px-2.5 py-1 rounded-lg bg-tiktok-cyan/15 hover:bg-tiktok-cyan/25 text-tiktok-cyan border border-tiktok-cyan/30 font-semibold transition flex items-center"
+                                title="Thử nghiệm tải ngay một video TikTok mẫu"
+                            >
+                                <i class="fa-brands fa-tiktok mr-1.5"></i> Thử link TikTok mẫu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ô nhập liệu chính -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-grow flex items-center bg-slate-950/90 border border-white/15 rounded-xl px-3.5 py-3 input-glow transition-all">
+                            <i class="fa-solid fa-link text-slate-400 mr-2.5 text-sm sm:text-base shrink-0"></i>
+                            <input 
+                                type="text" 
+                                id="singleUrlInput" 
+                                placeholder="Dán văn bản bất kỳ: 1.53 复制打开抖音... https://v.douyin.com/qdm32mj3l8Q/ ..." 
+                                class="w-full bg-transparent text-white placeholder-slate-500 focus:outline-none text-xs sm:text-sm pr-36"
+                                oninput="onSingleInputChanged()"
+                                onkeydown="if(event.key === 'Enter') analyzeSingleUrl()"
+                            >
+                            <!-- Cụm nút thao tác nhanh bên phải ô input -->
+                            <div class="absolute right-2 flex items-center space-x-1">
+                                <button 
+                                    type="button"
+                                    onclick="cleanSingleInputManual()" 
+                                    class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center transition"
+                                    title="Xoá bỏ toàn bộ chữ thừa, chỉ giữ lại link"
+                                >
+                                    <i class="fa-solid fa-broom mr-1"></i> Lọc
+                                </button>
+                                <button 
+                                    id="btnPasteSingle" 
+                                    onclick="pasteFromClipboard('single')" 
+                                    type="button"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-tiktok-cyan flex items-center transition"
+                                    title="Dán từ bộ nhớ tạm và tự động lọc"
+                                >
+                                    <i class="fa-regular fa-paste mr-1"></i> Dán
+                                </button>
+                                <button 
+                                    id="btnClearSingle" 
+                                    onclick="clearSingleInput()" 
+                                    type="button"
+                                    class="hidden px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-xs font-semibold text-rose-400 items-center transition"
+                                    title="Xoá ô nhập"
+                                >
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button 
+                            id="btnSubmitSingle"
+                            onclick="analyzeSingleUrl()" 
+                            class="btn-tiktok text-slate-950 font-extrabold px-6 py-3.5 rounded-xl text-sm flex items-center justify-center shrink-0 shadow-lg"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-down mr-2"></i>
+                            <span>Lấy Video Không Logo</span>
+                        </button>
+                    </div>
+
+                    <!-- Tuỳ chọn Chế độ Server bóc tách -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-400">
+                        <div class="flex items-center space-x-2">
+                            <span><i class="fa-solid fa-network-wired text-tiktok-cyan mr-1"></i>Chế độ bóc tách:</span>
+                            <select id="serverSelect" class="bg-slate-900 border border-white/15 text-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-tiktok-cyan">
+                                <option value="auto" selected>Tự động chuyển đổi 5 Server (Khuyên dùng)</option>
+                                <option value="tikwm">Server 1: TikWM (Siêu tốc cho TikTok & Douyin)</option>
+                                <option value="douyin_page">Server 2: Douyin Direct Stream (Chuyên trị v.douyin.com)</option>
+                                <option value="douyin_wtf">Server 3: Douyin Hybrid API (Douyin & TikTok)</option>
+                                <option value="lovetik">Server 4: LoveTik Engine (Dự phòng Quốc tế)</option>
+                            </select>
+                        </div>
+                        <span class="text-[11px] text-slate-500">Tự động vượt lỗi chặn CORS & 403 Forbidden</span>
+                    </div>
+
+                    <!-- Banner thông báo kết quả lọc bỏ phần chữ thừa -->
+                    <div id="cleanBanner" class="hidden rounded-xl bg-emerald-950/60 border border-emerald-500/30 p-3 text-xs transition-all">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="space-y-1 min-w-0">
+                                <div class="flex items-center text-emerald-300 font-semibold">
+                                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-400"></i>
+                                    <span>Đã xoá sạch phần chữ thừa! Đường link gốc của bạn:</span>
+                                </div>
+                                <div class="flex items-center space-x-2 pl-5">
+                                    <a id="cleanedLinkDisplay" href="#" target="_blank" rel="noopener noreferrer" class="font-mono font-bold text-tiktok-cyan hover:underline truncate text-xs sm:text-sm"></a>
+                                </div>
+                                <div id="removedGarbagePreview" class="text-[11px] text-slate-400 pl-5 truncate"></div>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0 pl-5 sm:pl-0">
+                                <button 
+                                    type="button"
+                                    onclick="copyCleanedSingleUrl()" 
+                                    class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center transition shadow"
+                                >
+                                    <i class="fa-regular fa-copy mr-1.5"></i> Copy link sạch
+                                </button>
+                                <a 
+                                    id="btnOpenCleanLink"
+                                    href="#" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center transition"
+                                    title="Mở link gốc trên tab mới"
+                                >
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung Tiến Trình Server Log Trực Tiếp -->
+                    <div id="serverStatusLog" class="hidden rounded-xl bg-slate-950/90 border border-tiktok-cyan/30 p-3.5 text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span id="serverStatusTitle" class="font-bold text-tiktok-cyan flex items-center">
+                                <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Đang khởi tạo bộ bóc tách...
+                            </span>
+                            <span id="serverStepBadge" class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-300">Bước 1/4</span>
+                        </div>
+                        <div id="serverStatusSteps" class="space-y-1 text-[11px] text-slate-400 font-mono max-h-28 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Kết quả phân tích Video / Slideshow -->
+                <div id="singleResultContainer" class="hidden"></div>
+            </div>
+
+            <!-- ================= TAB 2: LỌC & TẢI HÀNG LOẠT (BULK URLS) ================= -->
+            <div id="sectionBulk" class="hidden space-y-5">
+                <div class="glass-panel p-4 sm:p-6 rounded-2xl shadow-2xl space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-white flex items-center">
+                                <i class="fa-solid fa-layer-group text-tiktok-pink mr-2"></i>
+                                Lọc chữ thừa & Tải hàng loạt (TikTok / Douyin)
+                            </h2>
+                            <p class="text-xs text-slate-400">Dán nhiều đoạn chia sẻ lộn xộn vào ô bên dưới, công cụ sẽ tự bóc tách từng link sạch trên mỗi dòng.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="cleanBulkTextarea(true)" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-xs font-semibold text-amber-300 transition">
+                                <i class="fa-solid fa-broom mr-1"></i> Lọc sạch chữ thừa
+                            </button>
+                            <button onclick="copyAllBulkCleanUrls()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-xs font-semibold text-emerald-300 transition">
+                                <i class="fa-regular fa-copy mr-1"></i> Copy tất cả link
+                            </button>
+                            <button onclick="pasteFromClipboard('bulk')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-tiktok-cyan transition">
+                                <i class="fa-regular fa-paste mr-1"></i> Dán thêm
+                            </button>
+                            <button onclick="clearBulkInput()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-xs font-medium text-rose-400 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <textarea 
+                        id="bulkUrlInput" 
+                        rows="5" 
+                        placeholder="1.53 复制打开抖音，看看【小妤丸子的作品】晚安～ # 马来西亚 # 05  https://v.douyin.com/qdm32mj3l8Q/ 10/17 J@V.Yz ZzG:/ :4pm&#10;https://www.tiktok.com/@tiktok/video/7106594312292453675"
+                        class="w-full bg-slate-950/90 border border-white/10 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-tiktok-cyan transition font-mono"
+                    ></textarea>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div id="bulkProgressStatus" class="text-xs text-slate-400">
+                            Mẹo: Bấm "Lọc sạch chữ thừa" để biến cả đoạn văn dài thành danh sách link gọn gàng.
+                        </div>
+                        <button 
+                            id="btnSubmitBulk"
+                            onclick="processBulkUrls()" 
+                            class="w-full sm:w-auto btn-tiktok text-slate-950 font-extrabold px-6 py-3 rounded-xl text-sm flex items-center justify-center shadow-lg"
+                        >
+                            <i class="fa-solid fa-bolt mr-2"></i> Lọc & Tải Hàng Loạt
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Danh sách kết quả Bulk -->
+                <div id="bulkResultList" class="space-y-3.5"></div>
+            </div>
+
+            <!-- ================= TAB 3: LỊCH SỬ ĐÃ LƯU ================= -->
+            <div id="sectionHistory" class="hidden space-y-4">
+                <div class="glass-panel p-4 sm:p-6 rounded-2xl shadow-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-tiktok-cyan"></i>
+                            <h2 class="text-base sm:text-lg font-bold text-white">Lịch sử đã bóc tách trên thiết bị</h2>
+                            <span id="historyCountText" class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-300">0</span>
+                        </div>
+                        <button 
+                            id="btnClearHistory"
+                            onclick="clearHistory()" 
+                            class="hidden text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg transition items-center"
+                        >
+                            <i class="fa-regular fa-trash-can mr-1.5"></i> Xoá lịch sử
+                        </button>
+                    </div>
+
+                    <div id="historyGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tính năng nổi bật -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div class="glass-card p-4 rounded-2xl space-y-1.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-base">
+                    <i class="fa-solid fa-broom"></i>
+                </div>
+                <h3 class="font-bold text-white text-sm">Tự Động Xoá Phần Chữ Thừa</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">Tự động gọt bỏ đoạn chữ tiếng Trung (`1.53 复制打开抖音...`), hashtag và mã chia sẻ ngay khi bạn dán vào ô tìm kiếm.</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl space-y-1.5">
+                <div class="w-9 h-9 rounded-xl bg-tiktok-cyan/15 text-tiktok-cyan flex items-center justify-center text-base">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <h3 class="font-bold text-white text-sm">5 Server Giải Mã Douyin & TikTok</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">Tự động giải nén link rút gọn `v.douyin.com`, trích xuất `video_id` gốc và mở luồng phát trực tiếp không dính watermark.</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl space-y-1.5">
+                <div class="w-9 h-9 rounded-xl bg-tiktok-pink/15 text-tiktok-pink flex items-center justify-center text-base">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="font-bold text-white text-sm">Tải Đa Đường Hầm (Chống Chặn)</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">Tự động chuyển sang đường hầm Proxy Stream nếu CDN của Douyin/TikTok chặn tải trực tiếp, đảm bảo tải được file `.mp4` về máy.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Chân trang (Footer) -->
+    <footer class="relative z-10 border-t border-white/10 py-5 text-center text-xs text-slate-500">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 <strong class="text-slate-300">TikDouyinPro v3.0</strong> — Công cụ lọc link sạch & tải video TikTok / Douyin đa luồng.</p>
+            <p>Đã tích hợp cơ chế vượt chặn Referrer & CORS cho cả Douyin nội địa và TikTok quốc tế.</p>
+        </div>
+    </footer>
+
+    <!-- Hệ thống thông báo Toast nổi -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        const STORAGE_KEY = 'tikdouyin_pro_history_v3';
+        const SAMPLE_DOUYIN_RAW = '1.53 复制打开抖音，看看【小妤丸子的作品】晚安～ # 马来西亚 # 05  https://v.douyin.com/qdm32mj3l8Q/ 10/17 J@V.Yz ZzG:/ :4pm';
+        const SAMPLE_TIKTOK_RAW = 'https://www.tiktok.com/@tiktok/video/7106594312292453675';
+
+        // Khởi tạo ứng dụng
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHistory();
+            onSingleInputChanged();
+
+            const singleInput = document.getElementById('singleUrlInput');
+            singleInput.addEventListener('paste', () => {
+                setTimeout(() => {
+                    autoCleanSingleInput(true);
+                }, 40);
+            });
+
+            const bulkInput = document.getElementById('bulkUrlInput');
+            bulkInput.addEventListener('paste', () => {
+                setTimeout(() => {
+                    cleanBulkTextarea(false);
+                }, 40);
+            });
+        });
+
+        // ============================================================================
+        // 1. BỘ LỌC BỎ CHỮ THỪA (AUTO-CLEAN SHARE TEXT)
+        // ============================================================================
+        function extractCleanUrl(rawText) {
+            if (!rawText) return '';
+            const urlRegex = /https?:\/\/[a-zA-Z0-9.\-_/~:@!$&'()*+,;=%?#[\]]+/gi;
+            const matches = String(rawText).match(urlRegex);
+            if (matches && matches.length > 0) {
+                return matches[0].replace(/[.,;!?'"<>)\]]+$/, '');
+            }
+            return String(rawText).trim();
+        }
+
+        function extractAllCleanUrls(rawText) {
+            if (!rawText) return [];
+            const urlRegex = /https?:\/\/[a-zA-Z0-9.\-_/~:@!$&'()*+,;=%?#[\]]+/gi;
+            const matches = String(rawText).match(urlRegex) || [];
+            const cleaned = matches.map(u => u.replace(/[.,;!?'"<>)\]]+$/, ''));
+            return [...new Set(cleaned)];
+        }
+
+        function detectPlatform(url) {
+            const lower = String(url || '').toLowerCase();
+            if (lower.includes('douyin.com') || lower.includes('iesdouyin.com')) return 'Douyin';
+            if (lower.includes('tiktok.com')) return 'TikTok';
+            return '';
+        }
+
+        function autoCleanSingleInput(showToastNotification = false) {
+            const inputEl = document.getElementById('singleUrlInput');
+            const rawVal = inputEl.value;
+            if (!rawVal.trim()) {
+                hideCleanBanner();
+                onSingleInputChanged();
+                return '';
+            }
+
+            const cleanedUrl = extractCleanUrl(rawVal);
+            const hadGarbage = rawVal.trim() !== cleanedUrl && cleanedUrl.startsWith('http');
+
+            if (cleanedUrl.startsWith('http')) {
+                inputEl.value = cleanedUrl;
+                showCleanBanner(cleanedUrl, hadGarbage ? rawVal.trim() : '');
+                if (hadGarbage && showToastNotification) {
+                    showToast('Đã tự động xoá bỏ phần chữ thừa và giữ lại link gốc!', 'success');
+                }
+            }
+
+            onSingleInputChanged();
+            return cleanedUrl;
+        }
+
+        function cleanSingleInputManual() {
+            const inputEl = document.getElementById('singleUrlInput');
+            if (!inputEl.value.trim()) {
+                showToast('Ô nhập đang trống, bạn hãy dán văn bản chứa link vào trước nhé!', 'warning');
+                return;
+            }
+            const before = inputEl.value.trim();
+            const cleaned = autoCleanSingleInput(false);
+            if (cleaned.startsWith('http')) {
+                if (before !== cleaned) {
+                    showToast(`Đã lọc sạch: ${cleaned}`, 'success');
+                } else {
+                    showCleanBanner(cleaned, '');
+                    showToast('Đường link đã sạch sẵn!', 'info');
+                }
+            } else {
+                showToast('Không tìm thấy đường link hợp lệ (http/https) trong văn bản!', 'error');
+            }
+        }
+
+        // Hai nút Test nhanh cho người dùng
+        function testSampleDouyin() {
+            const inputEl = document.getElementById('singleUrlInput');
+            inputEl.value = SAMPLE_DOUYIN_RAW;
+            autoCleanSingleInput(true);
+            analyzeSingleUrl();
+        }
+
+        function testSampleTikTok() {
+            const inputEl = document.getElementById('singleUrlInput');
+            inputEl.value = SAMPLE_TIKTOK_RAW;
+            autoCleanSingleInput(false);
+            analyzeSingleUrl();
+        }
+
+        function showCleanBanner(cleanUrl, originalRawText = '') {
+            const banner = document.getElementById('cleanBanner');
+            const linkDisplay = document.getElementById('cleanedLinkDisplay');
+            const openBtn = document.getElementById('btnOpenCleanLink');
+            const garbagePreview = document.getElementById('removedGarbagePreview');
+
+            linkDisplay.textContent = cleanUrl;
+            linkDisplay.href = cleanUrl;
+            openBtn.href = cleanUrl;
+
+            if (originalRawText && originalRawText !== cleanUrl) {
+                garbagePreview.textContent = `Đã xoá chữ thừa từ: "${originalRawText}"`;
+                garbagePreview.classList.remove('hidden');
+            } else {
+                garbagePreview.classList.add('hidden');
+            }
+
+            banner.classList.remove('hidden');
+        }
+
+        function hideCleanBanner() {
+            document.getElementById('cleanBanner').classList.add('hidden');
+        }
+
+        function copyCleanedSingleUrl() {
+            const cleanUrl = extractCleanUrl(document.getElementById('singleUrlInput').value);
+            if (!cleanUrl) return;
+            copyTextToClipboard(cleanUrl, `Đã sao chép link sạch: ${cleanUrl}`);
+        }
+
+        function onSingleInputChanged() {
+            const input = document.getElementById('singleUrlInput');
+            const val = input.value.trim();
+            const btnPaste = document.getElementById('btnPasteSingle');
+            const btnClear = document.getElementById('btnClearSingle');
+            const badge = document.getElementById('platformBadgeSingle');
+
+            if (val.length > 0) {
+                btnPaste.classList.add('hidden');
+                btnClear.classList.remove('hidden');
+                btnClear.classList.add('flex');
+            } else {
+                btnPaste.classList.remove('hidden');
+                btnClear.classList.add('hidden');
+                btnClear.classList.remove('flex');
+                hideCleanBanner();
+            }
+
+            const platform = detectPlatform(val);
+            if (platform === 'Douyin') {
+                badge.textContent = 'Douyin Nội Địa (抖音)';
+                badge.className = 'px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] bg-tiktok-pink/20 text-tiktok-pink border border-tiktok-pink/40';
+                badge.classList.remove('hidden');
+            } else if (platform === 'TikTok') {
+                badge.textContent = 'TikTok Quốc Tế';
+                badge.className = 'px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] bg-tiktok-cyan/20 text-tiktok-cyan border border-tiktok-cyan/40';
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function clearSingleInput() {
+            const input = document.getElementById('singleUrlInput');
+            input.value = '';
+            hideCleanBanner();
+            document.getElementById('serverStatusLog').classList.add('hidden');
+            onSingleInputChanged();
+            input.focus();
+        }
+
+        // ============================================================================
+        // 2. LOG TIẾN TRÌNH SERVER & THÔNG BÁO TOAST
+        // ============================================================================
+        function appendServerLog(message, stepText = '', isSuccess = false) {
+            const box = document.getElementById('serverStatusLog');
+            const titleEl = document.getElementById('serverStatusTitle');
+            const stepEl = document.getElementById('serverStepBadge');
+            const stepsList = document.getElementById('serverStatusSteps');
+
+            box.classList.remove('hidden');
+            if (stepText) stepEl.textContent = stepText;
+
+            if (isSuccess) {
+                titleEl.className = 'font-bold text-emerald-400 flex items-center';
+                titleEl.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${escapeHtml(message)}`;
+            } else {
+                titleEl.className = 'font-bold text-tiktok-cyan flex items-center';
+                titleEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> ${escapeHtml(message)}`;
+            }
+
+            const line = document.createElement('div');
+            line.className = isSuccess ? 'text-emerald-400 font-semibold' : 'text-slate-400';
+            line.textContent = `• [${new Date().toLocaleTimeString('vi-VN')}] ${message}`;
+            stepsList.appendChild(line);
+            stepsList.scrollTop = stepsList.scrollHeight;
+        }
+
+        function resetServerLog() {
+            const box = document.getElementById('serverStatusLog');
+            const stepsList = document.getElementById('serverStatusSteps');
+            stepsList.innerHTML = '';
+            box.classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colorMap = {
+                success: 'border-emerald-500/40 bg-emerald-950/95 text-emerald-200',
+                error: 'border-rose-500/40 bg-rose-950/95 text-rose-200',
+                warning: 'border-amber-500/40 bg-amber-950/95 text-amber-200',
+                info: 'border-tiktok-cyan/40 bg-slate-900/95 text-slate-100'
+            };
+
+            const iconMap = {
+                success: 'fa-circle-check text-emerald-400',
+                error: 'fa-circle-exclamation text-rose-400',
+                warning: 'fa-triangle-exclamation text-amber-400',
+                info: 'fa-circle-info text-tiktok-cyan'
+            };
+
+            toast.className = `pointer-events-auto flex items-center space-x-3 p-3.5 rounded-xl border backdrop-blur-md shadow-2xl transform transition-all duration-300 translate-y-4 opacity-0 ${colorMap[type] || colorMap.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${iconMap[type] || iconMap.info} text-lg shrink-0"></i>
+                <span class="text-xs sm:text-sm font-medium flex-grow leading-snug">${escapeHtml(message)}</span>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3800);
+        }
+
+        function switchTab(tab) {
+            const tabs = ['single', 'bulk', 'history'];
+            tabs.forEach(t => {
+                const section = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                const tabBtn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+                const navBtn = document.getElementById('nav-' + t);
+
+                if (t === tab) {
+                    section.classList.remove('hidden');
+                    tabBtn.className = 'py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-gradient-to-r from-tiktok-cyan/20 to-tiktok-pink/20 text-white border border-white/15 shadow';
+                    if (navBtn) navBtn.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-white/10 text-white transition relative';
+                } else {
+                    section.classList.add('hidden');
+                    tabBtn.className = 'py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white';
+                    if (navBtn) navBtn.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition relative';
+                }
+            });
+
+            if (tab === 'history') renderHistory();
+        }
+
+        async function pasteFromClipboard(mode = 'single') {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        if (mode === 'single') {
+                            document.getElementById('singleUrlInput').value = text;
+                            autoCleanSingleInput(true);
+                        } else {
+                            const bulkArea = document.getElementById('bulkUrlInput');
+                            bulkArea.value = (bulkArea.value ? bulkArea.value + '\n' : '') + text;
+                            cleanBulkTextarea(true);
+                        }
+                        return;
+                    }
+                }
+                throw new Error('Clipboard restricted');
+            } catch (err) {
+                const targetInput = mode === 'single' ? document.getElementById('singleUrlInput') : document.getElementById('bulkUrlInput');
+                targetInput.focus();
+                showToast('Hãy nhấn Ctrl+V (hoặc chạm giữ -> Dán) trực tiếp vào ô, web sẽ tự động lọc chữ thừa cho bạn!', 'info');
+            }
+        }
+
+        function copyTextToClipboard(text, successMsg = 'Đã sao chép vào bộ nhớ tạm!') {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const ok = document.execCommand('copy');
+                if (ok) showToast(successMsg, 'success');
+                else showToast('Không thể sao chép tự động.', 'error');
+            } catch (err) {
+                showToast('Lỗi khi sao chép văn bản.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function formatNumber(num) {
+            if (!num && num !== 0) return '0';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString('vi-VN');
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function normalizeMediaUrl(url) {
+            if (!url) return '';
+            let clean = String(url).replace(/\\u002F/g, '/').replace(/\\\//g, '/');
+            if (clean.startsWith('//')) clean = 'https:' + clean;
+            if (clean.startsWith('http://')) clean = clean.replace('http://', 'https://');
+            if (clean.startsWith('https://')) return clean;
+            return `https://www.tikwm.com${clean.startsWith('/') ? '' : '/'}${clean}`;
+        }
+
+        // Hàm fetch có giới hạn thời gian (Timeout) để tránh treo khi 1 proxy phản hồi chậm
+        async function fetchWithTimeout(resource, options = {}, timeoutMs = 9500) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const response = await fetch(resource, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                throw err;
+            }
+        }
+
+        // ============================================================================
+        // 3. HỆ THỐNG BÓC TÁCH ĐA SERVER (5 ENGINES WATERFALL) CHO TIKTOK & DOUYIN
+        // ============================================================================
+
+        // --- SERVER 1: TikWM API (Trực tiếp + Proxy dự phòng) ---
+        async function tryEngineTikWM(cleanUrl, platform) {
+            const apiTarget = `https://www.tikwm.com/api/?url=${encodeURIComponent(cleanUrl)}&hd=1`;
+            const attempts = [
+                apiTarget,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(apiTarget)}`,
+                `https://corsproxy.io/?${encodeURIComponent(apiTarget)}`
+            ];
+
+            for (const endpoint of attempts) {
+                try {
+                    const res = await fetchWithTimeout(endpoint, {}, 7500);
+                    if (!res.ok) continue;
+                    const json = await res.json();
+                    if (json && json.code === 0 && json.data && (json.data.play || json.data.hdplay || (json.data.images && json.data.images.length > 0))) {
+                        return {
+                            ...json.data,
+                            platform,
+                            serverUsed: 'Server 1 (TikWM High-Speed)',
+                            originalInputUrl: cleanUrl
+                        };
+                    }
+                } catch (e) {
+                    // Tiếp tục thử proxy kế tiếp
+                }
+            }
+            return null;
+        }
+
+        // --- SERVER 2: Douyin Direct Page & Stream Resolver (Chuyên trị v.douyin.com) ---
+        // Bóc tách trực tiếp mã nguồn trang chia sẻ Douyin qua chuỗi CORS Proxy để lấy video_id (uri) và mở luồng sạch aweme.snssdk.com
+        async function tryEngineDouyinDirectPage(cleanUrl, platform) {
+            const proxyBuilders = [
+                (u) => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, type: 'allorigins_json' }),
+                (u) => ({ url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, type: 'raw' }),
+                (u) => ({ url: `https://corsproxy.io/?${encodeURIComponent(u)}`, type: 'raw' }),
+                (u) => ({ url: `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, type: 'raw' })
+            ];
+
+            for (const buildProxy of proxyBuilders) {
+                try {
+                    const { url: proxyUrl, type } = buildProxy(cleanUrl);
+                    const res = await fetchWithTimeout(proxyUrl, {}, 8500);
+                    if (!res.ok) continue;
+
+                    let htmlText = '';
+                    let finalResolvedUrl = cleanUrl;
+
+                    if (type === 'allorigins_json') {
+                        const wrapper = await res.json();
+                        htmlText = wrapper.contents || '';
+                        if (wrapper.status && wrapper.status.url) {
+                            finalResolvedUrl = wrapper.status.url;
+                        }
+                    } else {
+                        htmlText = await res.text();
+                    }
+
+                    if (!htmlText || htmlText.length < 100) continue;
+
+                    const parsed = parseDouyinHtmlPayload(htmlText, finalResolvedUrl, cleanUrl, platform);
+                    if (parsed) return parsed;
+                } catch (e) {
+                    // Thử proxy kế tiếp
+                }
+            }
+            return null;
+        }
+
+        // Phân tích dữ liệu _ROUTER_DATA / RENDER_DATA hoặc Regex trong trang Douyin
+        function parseDouyinHtmlPayload(htmlText, resolvedUrl, cleanUrl, platform) {
+            try {
+                // Giải mã các chuỗi escaped phổ biến trong JSON của Douyin
+                const unescaped = htmlText
+                    .replace(/\\u002F/g, '/')
+                    .replace(/\\\//g, '/')
+                    .replace(/&quot;/g, '"');
+
+                // Tìm aweme_id / video_id (19 chữ số) từ URL đích hoặc trong HTML
+                const idMatch = resolvedUrl.match(/\/(?:video|note)\/(\d{15,22})/) 
+                    || unescaped.match(/"aweme_id"\s*:\s*"(\d{15,22})"/)
+                    || unescaped.match(/"itemId"\s*:\s*"(\d{15,22})"/)
+                    || unescaped.match(/video_id=(\d{15,22})/);
+                const awemeId = idMatch ? idMatch[1] : Date.now();
+
+                // Cách 1: Tìm URI của luồng phát không logo (play_addr -> uri)
+                // URI của Douyin thường có dạng "v0200fg10000..." hoặc "v0300fg10000..." hoặc "v0d00fg1..."
+                let videoUri = '';
+                const playAddrUriMatch = unescaped.match(/"play_addr"\s*:\s*\{[^{}]*"uri"\s*:\s*"([a-zA-Z0-9_]{16,64})"/);
+                if (playAddrUriMatch) {
+                    videoUri = playAddrUriMatch[1];
+                } else {
+                    const genericVidMatch = unescaped.match(/playwm\/\?video_id=([a-zA-Z0-9_]{16,64})/) 
+                        || unescaped.match(/play\/\?video_id=([a-zA-Z0-9_]{16,64})/)
+                        || unescaped.match(/"vid"\s*:\s*"(v0[a-zA-Z0-9_]{14,60})"/);
+                    if (genericVidMatch) videoUri = genericVidMatch[1];
+                }
+
+                // Cách 2: Tìm trực tiếp đường dẫn mp4/playwm trong url_list và đổi "playwm" -> "play" (xoá logo)
+                let directPlayUrl = '';
+                const urlListMatch = unescaped.match(/https?:\/\/[^"'\s<>]+(?:douyinvod\.com|snssdk\.com|iesdouyin\.com)[^"'\s<>]+/gi);
+                if (urlListMatch && urlListMatch.length > 0) {
+                    const videoCandidate = urlListMatch.find(u => u.includes('playwm') || u.includes('video_id=') || u.includes('douyinvod.com'));
+                    if (videoCandidate) {
+                        directPlayUrl = videoCandidate.replace('/playwm/', '/play/');
+                    }
+                }
+
+                // Nếu có videoUri, tạo đường dẫn luồng sạch chính thức của máy chủ Douyin (1080p không logo)
+                const cleanStream1080 = videoUri 
+                    ? `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`
+                    : directPlayUrl;
+                const cleanStream720 = videoUri
+                    ? `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=720p&line=0`
+                    : directPlayUrl;
+
+                // Kiểm tra xem có phải bài đăng Album ảnh (Slideshow) trên Douyin không
+                const imagesMatches = [];
+                const imgRegex = /"images"\s*:\s*\[([\s\S]*?)\]/;
+                const imgBlock = unescaped.match(imgRegex);
+                if (imgBlock && imgBlock[1]) {
+                    const urlsInBlock = imgBlock[1].match(/https?:\/\/[^"'\s<>]+/g) || [];
+                    urlsInBlock.forEach(u => {
+                        if (!u.includes('.mp3') && !u.includes('.mp4') && imagesMatches.length < 30) {
+                            imagesMatches.push(u);
+                        }
+                    });
+                }
+
+                if (!cleanStream1080 && imagesMatches.length === 0) {
+                    return null;
+                }
+
+                // Trích xuất tiêu đề (desc), tác giả (nickname), ảnh bìa (cover)
+                const descMatch = unescaped.match(/"desc"\s*:\s*"([^"]{1,300})"/) || unescaped.match(/<title>([^<]+)<\/title>/);
+                const nickMatch = unescaped.match(/"nickname"\s*:\s*"([^"]{1,80})"/);
+                const coverMatch = unescaped.match(/"cover"\s*:\s*\{[^{}]*"url_list"\s*:\s*\[\s*"(https?:\/\/[^"]+)"/);
+                const avatarMatch = unescaped.match(/"avatar_thumb"\s*:\s*\{[^{}]*"url_list"\s*:\s*\[\s*"(https?:\/\/[^"]+)"/);
+                const diggMatch = unescaped.match(/"digg_count"\s*:\s*(\d+)/);
+                const commentMatch = unescaped.match(/"comment_count"\s*:\s*(\d+)/);
+                const shareMatch = unescaped.match(/"share_count"\s*:\s*(\d+)/);
+
+                return {
+                    id: awemeId,
+                    title: descMatch ? descMatch[1].replace(/ - 抖音$/, '') : 'Video Douyin (抖音)',
+                    duration: 0,
+                    play: cleanStream720 || cleanStream1080,
+                    hdplay: cleanStream1080,
+                    music: '',
+                    cover: coverMatch ? coverMatch[1] : 'https://placehold.co/400x600/121622/00f2fe?text=Douyin+HD',
+                    origin_cover: coverMatch ? coverMatch[1] : '',
+                    images: imagesMatches.length > 0 ? [...new Set(imagesMatches)] : null,
+                    play_count: 0,
+                    digg_count: diggMatch ? parseInt(diggMatch[1], 10) : 0,
+                    comment_count: commentMatch ? parseInt(commentMatch[1], 10) : 0,
+                    share_count: shareMatch ? parseInt(shareMatch[1], 10) : 0,
+                    author: {
+                        nickname: nickMatch ? nickMatch[1] : 'Douyin Creator (抖音)',
+                        unique_id: awemeId,
+                        avatar: avatarMatch ? avatarMatch[1] : 'https://placehold.co/100x100/fe0979/ffffff?text=DY'
+                    },
+                    platform,
+                    serverUsed: 'Server 2 (Douyin Direct Stream 1080p)',
+                    originalInputUrl: cleanUrl
+                };
+            } catch (err) {
+                return null;
+            }
+        }
+
+        // --- SERVER 3: Douyin.wtf Hybrid API (Trực tiếp + Chuỗi CORS Proxy) ---
+        async function tryEngineDouyinWtf(cleanUrl, platform) {
+            const target = `https://api.douyin.wtf/api/hybrid/video_data?url=${encodeURIComponent(cleanUrl)}&minimal=false`;
+            const endpoints = [
+                target,
+                `https://corsproxy.io/?${encodeURIComponent(target)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`
+            ];
+
+            for (const ep of endpoints) {
+                try {
+                    const res = await fetchWithTimeout(ep, {}, 8500);
+                    if (!res.ok) continue;
+                    const json = await res.json();
+                    if (json && json.code === 200 && json.data) {
+                        const d = json.data;
+                        const videoNoWm = d.video_data?.nwm_video_url_HQ || d.video_data?.nwm_video_url || '';
+                        const imagesList = d.image_data?.no_watermark_image_list || null;
+
+                        if (videoNoWm || (imagesList && imagesList.length > 0)) {
+                            return {
+                                id: d.aweme_id || Date.now(),
+                                title: d.desc || `Video ${platform}`,
+                                duration: d.duration ? Math.round(d.duration / 1000) : 0,
+                                play: d.video_data?.nwm_video_url || videoNoWm,
+                                hdplay: d.video_data?.nwm_video_url_HQ || videoNoWm,
+                                music: d.music?.play_url?.url_list?.[0] || '',
+                                cover: d.cover_data?.origin_cover?.url_list?.[0] || d.cover_data?.cover?.url_list?.[0] || '',
+                                origin_cover: d.cover_data?.origin_cover?.url_list?.[0] || '',
+                                images: imagesList,
+                                play_count: d.statistics?.play_count || 0,
+                                digg_count: d.statistics?.digg_count || 0,
+                                comment_count: d.statistics?.comment_count || 0,
+                                share_count: d.statistics?.share_count || 0,
+                                author: {
+                                    nickname: d.author?.nickname || `${platform} Creator`,
+                                    unique_id: d.author?.unique_id || d.author?.short_id || 'creator',
+                                    avatar: d.author?.avatar_thumb?.url_list?.[0] || ''
+                                },
+                                platform,
+                                serverUsed: 'Server 3 (Hybrid API)',
+                                originalInputUrl: cleanUrl
+                            };
+                        }
+                    }
+                } catch (e) {
+                    // Thử proxy kế tiếp
+                }
+            }
+            return null;
+        }
+
+        // --- SERVER 4: LoveTik Engine (Hỗ trợ tốt TikTok & một số link rút gọn) ---
+        async function tryEngineLoveTik(cleanUrl, platform) {
+            const target = 'https://lovetik.com/api/ajax/search';
+            const endpoints = [
+                target,
+                `https://corsproxy.io/?${encodeURIComponent(target)}`
+            ];
+
+            for (const ep of endpoints) {
+                try {
+                    const formBody = new URLSearchParams();
+                    formBody.append('query', cleanUrl);
+
+                    const res = await fetchWithTimeout(ep, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                        body: formBody.toString()
+                    }, 8000);
+
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (data && data.status === 'ok' && Array.isArray(data.links) && data.links.length > 0) {
+                        const noWmLink = data.links.find(l => (l.t || '').toLowerCase().includes('no watermark') || (l.t || '').includes('HD')) || data.links[0];
+                        const mp3Link = data.links.find(l => (l.t || '').toLowerCase().includes('mp3') || (l.t || '').toLowerCase().includes('audio'));
+                        if (noWmLink && noWmLink.a) {
+                            return {
+                                id: data.vid || Date.now(),
+                                title: data.desc || `Video ${platform}`,
+                                duration: 0,
+                                play: noWmLink.a,
+                                hdplay: noWmLink.a,
+                                music: mp3Link ? mp3Link.a : '',
+                                cover: data.cover || '',
+                                origin_cover: data.cover || '',
+                                images: data.images || null,
+                                play_count: 0,
+                                digg_count: 0,
+                                comment_count: 0,
+                                share_count: 0,
+                                author: {
+                                    nickname: data.author_name || data.author || 'Creator',
+                                    unique_id: data.author || 'user',
+                                    avatar: data.author_a || ''
+                                },
+                                platform,
+                                serverUsed: 'Server 4 (LoveTik Engine)',
+                                originalInputUrl: cleanUrl
+                            };
+                        }
+                    }
+                } catch (e) {
+                    // Tiếp tục
+                }
+            }
+            return null;
+        }
+
+        // --- ĐIỀU PHỐI VIÊN ĐA SERVER (ORCHESTRATOR) ---
+        async function fetchMediaMultiEngine(rawInput, updateStatusCallback = null) {
+            const cleanUrl = extractCleanUrl(rawInput);
+            if (!cleanUrl || !cleanUrl.startsWith('http')) {
+                throw new Error('Không tìm thấy đường link hợp lệ! Vui lòng dán liên kết TikTok hoặc Douyin.');
+            }
+
+            const platform = detectPlatform(cleanUrl) || 'TikTok/Douyin';
+            const selectedMode = document.getElementById('serverSelect')?.value || 'auto';
+
+            const notify = (msg, step, ok = false) => {
+                if (typeof updateStatusCallback === 'function') updateStatusCallback(msg, step, ok);
+            };
+
+            // Nếu người dùng chọn 1 server cụ thể
+            if (selectedMode === 'tikwm') {
+                notify('Đang kết nối Server 1 (TikWM)...', '1/1');
+                const r = await tryEngineTikWM(cleanUrl, platform);
+                if (r) return r;
+            } else if (selectedMode === 'douyin_page') {
+                notify('Đang bóc tách trực tiếp luồng Douyin 1080p...', '1/1');
+                const r = await tryEngineDouyinDirectPage(cleanUrl, platform);
+                if (r) return r;
+            } else if (selectedMode === 'douyin_wtf') {
+                notify('Đang kết nối Server 3 (Douyin Hybrid)...', '1/1');
+                const r = await tryEngineDouyinWtf(cleanUrl, platform);
+                if (r) return r;
+            } else if (selectedMode === 'lovetik') {
+                notify('Đang kết nối Server 4 (LoveTik)...', '1/1');
+                const r = await tryEngineLoveTik(cleanUrl, platform);
+                if (r) return r;
+            }
+
+            // Chế độ AUTO thông minh: Tối ưu thứ tự ưu tiên theo nền tảng (Douyin vs TikTok)
+            if (platform === 'Douyin') {
+                notify('Phát hiện link Douyin (抖音) -> Đang chạy Server 2 (Douyin Direct Stream)...', 'Bước 1/4');
+                const resPage = await tryEngineDouyinDirectPage(cleanUrl, platform);
+                if (resPage) {
+                    notify('Đã bóc tách thành công luồng gốc từ Server 2!', 'Hoàn tất', true);
+                    return resPage;
+                }
+
+                notify('Đang chuyển sang Server 3 (Douyin Hybrid API qua Proxy)...', 'Bước 2/4');
+                const resWtf = await tryEngineDouyinWtf(cleanUrl, platform);
+                if (resWtf) {
+                    notify('Đã bóc tách thành công từ Server 3!', 'Hoàn tất', true);
+                    return resWtf;
+                }
+
+                notify('Đang thử nghiệm Server 1 (TikWM Multi-Region)...', 'Bước 3/4');
+                const resTikwm = await tryEngineTikWM(cleanUrl, platform);
+                if (resTikwm) {
+                    notify('Đã bóc tách thành công từ Server 1!', 'Hoàn tất', true);
+                    return resTikwm;
+                }
+
+                notify('Đang thử nghiệm Server 4 (LoveTik Engine)...', 'Bước 4/4');
+                const resLove = await tryEngineLoveTik(cleanUrl, platform);
+                if (resLove) {
+                    notify('Đã bóc tách thành công từ Server 4!', 'Hoàn tất', true);
+                    return resLove;
+                }
+            } else {
+                // Luồng ưu tiên cho TikTok Quốc tế
+                notify('Đang kết nối Server 1 (TikWM High-Speed)...', 'Bước 1/4');
+                const resTikwm = await tryEngineTikWM(cleanUrl, platform);
+                if (resTikwm) {
+                    notify('Đã lấy luồng video HD không logo từ Server 1!', 'Hoàn tất', true);
+                    return resTikwm;
+                }
+
+                notify('Đang chuyển sang Server 4 (LoveTik Engine)...', 'Bước 2/4');
+                const resLove = await tryEngineLoveTik(cleanUrl, platform);
+                if (resLove) {
+                    notify('Đã lấy luồng video từ Server 4!', 'Hoàn tất', true);
+                    return resLove;
+                }
+
+                notify('Đang chuyển sang Server 3 (Hybrid Parser)...', 'Bước 3/4');
+                const resWtf = await tryEngineDouyinWtf(cleanUrl, platform);
+                if (resWtf) {
+                    notify('Đã lấy luồng video từ Server 3!', 'Hoàn tất', true);
+                    return resWtf;
+                }
+
+                notify('Đang thử Server 2 (Direct Page Resolver)...', 'Bước 4/4');
+                const resPage = await tryEngineDouyinDirectPage(cleanUrl, platform);
+                if (resPage) {
+                    notify('Đã lấy luồng video từ Server 2!', 'Hoàn tất', true);
+                    return resPage;
+                }
+            }
+
+            // Nếu là link Douyin và cả 4 server đều bị tường lửa chặn tạm thời, cung cấp bảng Cổng Tải Trực Tiếp Dự Phòng
+            throw new Error(`Tất cả proxy tự động hiện đang bận với link ${cleanUrl}. Bạn hãy dùng ngay các Nút Cổng Tải Trực Tiếp bên dưới (link sạch đã được tự động copy sẵn cho bạn)!`);
+        }
+
+        // ============================================================================
+        // 4. XỬ LÝ PHÂN TÍCH LINK ĐƠN & HIỂN THỊ KẾT QUẢ
+        // ============================================================================
+        async function analyzeSingleUrl(customUrl = null) {
+            const inputEl = document.getElementById('singleUrlInput');
+            if (customUrl) {
+                inputEl.value = customUrl;
+                switchTab('single');
+            }
+
+            const cleanedUrl = autoCleanSingleInput(false);
+            if (!cleanedUrl) {
+                showToast('Vui lòng dán đoạn chia sẻ hoặc link TikTok / Douyin vào ô trống!', 'warning');
+                inputEl.focus();
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btnSubmitSingle');
+            const resultContainer = document.getElementById('singleResultContainer');
+
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add('opacity-60', 'cursor-not-allowed');
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Đang bóc tách...</span>`;
+            resultContainer.classList.add('hidden');
+            resetServerLog();
+
+            try {
+                const mediaData = await fetchMediaMultiEngine(cleanedUrl, (msg, step, ok) => {
+                    appendServerLog(msg, step, ok);
+                });
+                renderSingleResult(mediaData, resultContainer);
+                saveToHistory(mediaData);
+                showToast(`Thành công! Đã lấy video qua ${mediaData.serverUsed || 'Server Pro'}`, 'success');
+            } catch (error) {
+                // Tự động sao chép sẵn link sạch để người dùng chỉ cần 1 chạm nếu dùng cổng ngoài
+                copyTextToClipboard(cleanedUrl, 'Đã tự động copy sẵn link sạch vào bộ nhớ tạm!');
+                renderFallbackGateways(cleanedUrl, error.message, resultContainer);
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('opacity-60', 'cursor-not-allowed');
+                btnSubmit.innerHTML = `<i class="fa-solid fa-cloud-arrow-down mr-2"></i><span>Lấy Video Không Logo</span>`;
+            }
+        }
+
+        // Bảng Cổng Tải Trực Tiếp Dự Phòng 100% hoạt động khi các Proxy miễn phí bị quá tải
+        function renderFallbackGateways(cleanedUrl, errMsg, container) {
+            const platform = detectPlatform(cleanedUrl) || 'Douyin/TikTok';
+            container.innerHTML = `
+                <div class="glass-panel rounded-2xl p-5 sm:p-6 border border-amber-500/40 space-y-4 shadow-2xl">
+                    <div class="flex items-start space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 text-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="font-bold text-white text-sm sm:text-base">Đã lọc sạch Link ${escapeHtml(platform)} & Kích hoạt Cổng Tải Trực Tiếp Dự Phòng</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(errMsg)}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/90 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <span class="text-[11px] text-emerald-400 font-semibold block"><i class="fa-solid fa-check mr-1"></i>Link sạch đã được tự động Copy vào Clipboard của bạn:</span>
+                            <span class="font-mono text-xs sm:text-sm text-white font-bold truncate block mt-0.5">${escapeHtml(cleanedUrl)}</span>
+                        </div>
+                        <button onclick="copyTextToClipboard('${escapeHtml(cleanedUrl)}', 'Đã copy link sạch!')" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shrink-0 transition">
+                            <i class="fa-regular fa-copy mr-1.5"></i> Copy Lại Link Sạch
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-xs font-semibold text-tiktok-cyan uppercase tracking-wider">
+                            <i class="fa-solid fa-bolt mr-1"></i> Bấm 1 trong các Cổng Chuyên Dụng dưới đây để tải ngay (Chỉ cần Dán Ctrl+V vì link sạch đã được copy sẵn):
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <a href="https://snapdouyin.app/vi" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-gradient-to-r from-tiktok-pink/20 to-purple-600/20 hover:from-tiktok-pink/30 hover:to-purple-600/30 border border-tiktok-pink/40 text-white font-bold text-xs flex items-center justify-between transition">
+                                <span><i class="fa-solid fa-fire text-tiktok-pink mr-2"></i>Cổng SnapDouyin (VIP 1)</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-slate-400"></i>
+                            </a>
+                            <a href="https://savetik.co/vi/douyin-downloader" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-gradient-to-r from-tiktok-cyan/20 to-blue-600/20 hover:from-tiktok-cyan/30 hover:to-blue-600/30 border border-tiktok-cyan/40 text-white font-bold text-xs flex items-center justify-between transition">
+                                <span><i class="fa-solid fa-cloud-arrow-down text-tiktok-cyan mr-2"></i>Cổng SaveTik Douyin (VIP 2)</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-slate-400"></i>
+                            </a>
+                            <a href="${escapeHtml(cleanedUrl)}" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs flex items-center justify-between transition">
+                                <span><i class="fa-solid fa-play text-emerald-400 mr-2"></i>Mở Xem Video Gốc</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-slate-400"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between text-xs text-slate-400 border-t border-white/10">
+                        <span>Hoặc bấm thử quét lại bằng luồng Proxy khác:</span>
+                        <button onclick="analyzeSingleUrl('${escapeHtml(cleanedUrl)}')" class="text-tiktok-cyan hover:underline font-bold">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Thử Quét Lại Ngay
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function renderSingleResult(data, container) {
+            const isSlideshow = Array.isArray(data.images) && data.images.length > 0;
+            const platform = data.platform || detectPlatform(data.originalInputUrl) || 'TikTok';
+            const serverUsed = escapeHtml(data.serverUsed || 'Multi-Server Engine');
+            const authorName = escapeHtml(data.author?.nickname || `${platform} Creator`);
+            const authorUniqueId = escapeHtml(data.author?.unique_id || 'creator');
+            const avatarUrl = normalizeMediaUrl(data.author?.avatar) || 'https://placehold.co/100x100/121622/00f2fe?text=User';
+            const coverUrl = normalizeMediaUrl(data.origin_cover || data.cover) || 'https://placehold.co/400x600/121622/00f2fe?text=Preview';
+            const hdVideoUrl = normalizeMediaUrl(data.hdplay || data.play);
+            const sdVideoUrl = normalizeMediaUrl(data.play || data.hdplay);
+            const musicUrl = normalizeMediaUrl(data.music);
+            const caption = data.title || 'Không có mô tả (No caption)';
+            const safeCaption = escapeHtml(caption);
+            const videoId = data.id || Date.now();
+
+            let mediaPreviewHtml = '';
+            if (isSlideshow) {
+                const slidesHtml = data.images.map((imgUrl, idx) => `
+                    <div class="relative group rounded-xl overflow-hidden bg-slate-950 border border-white/10 aspect-[3/4]">
+                        <img src="${normalizeMediaUrl(imgUrl)}" referrerpolicy="no-referrer" alt="Slide ${idx + 1}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x530/121622/00f2fe?text=Slide+${idx+1}'">
+                        <div class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-[11px] font-bold px-2 py-0.5 rounded-md text-white">
+                            Ảnh ${idx + 1}/${data.images.length}
+                        </div>
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-2">
+                            <button 
+                                onclick="forceDownloadFile('${normalizeMediaUrl(imgUrl)}', '${platform.toLowerCase()}_${authorUniqueId}_${videoId}_slide_${idx + 1}.jpg', this)"
+                                class="bg-tiktok-cyan text-slate-950 font-bold text-xs px-3 py-2 rounded-lg shadow-lg flex items-center space-x-1 hover:scale-105 transition"
+                            >
+                                <i class="fa-solid fa-download"></i>
+                                <span>Tải Ảnh ${idx + 1}</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                mediaPreviewHtml = `
+                    <div class="w-full md:w-80 shrink-0 space-y-3">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-xs font-bold uppercase tracking-wider text-tiktok-pink flex items-center">
+                                <i class="fa-regular fa-images mr-1.5"></i> Album (${data.images.length} ảnh)
+                            </span>
+                            <button onclick="downloadAllSlides(${JSON.stringify(data.images).replace(/"/g, '&quot;')}, '${authorUniqueId}_${videoId}')" class="text-xs text-tiktok-cyan hover:underline font-semibold">
+                                <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Tải hết ảnh
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
+                            ${slidesHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                mediaPreviewHtml = `
+                    <div class="w-full md:w-72 shrink-0 flex flex-col space-y-2">
+                        <div class="relative rounded-2xl overflow-hidden bg-black border border-white/10 shadow-xl aspect-[9/16] max-h-[430px] mx-auto w-full">
+                            <!-- referrerpolicy="no-referrer" giúp phát trực tiếp luồng Douyin/TikTok CDN không bị lỗi 403 -->
+                            <video 
+                                id="mainPreviewVideo"
+                                src="${sdVideoUrl}" 
+                                poster="${coverUrl}" 
+                                referrerpolicy="no-referrer"
+                                controls 
+                                playsinline 
+                                preload="metadata"
+                                class="w-full h-full object-contain bg-black"
+                            ></video>
+                            <div class="absolute top-3 left-3 pointer-events-none flex items-center space-x-1.5 bg-black/65 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                <span class="text-[11px] font-semibold text-white">${data.duration ? formatDuration(data.duration) : 'HD Stream'}</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-center text-slate-400">
+                            Mẹo: Bạn cũng có thể bấm biểu tượng <strong>⋮</strong> ở góc khung video để lưu nhanh.
+                        </p>
+                    </div>
+                `;
+            }
+
+            let downloadButtonsHtml = '';
+            if (isSlideshow) {
+                downloadButtonsHtml = `
+                    <button 
+                        onclick="downloadAllSlides(${JSON.stringify(data.images).replace(/"/g, '&quot;')}, '${authorUniqueId}_${videoId}')"
+                        class="w-full btn-tiktok text-slate-950 font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-between shadow-lg"
+                    >
+                        <span class="flex items-center"><i class="fa-solid fa-images text-lg mr-2.5"></i> Tải Toàn Bộ ${data.images.length} Ảnh (HD Không Logo)</span>
+                        <span class="bg-slate-950/20 px-2 py-0.5 rounded text-xs font-bold">JPG HD</span>
+                    </button>
+                `;
+            } else {
+                downloadButtonsHtml = `
+                    <button 
+                        onclick="forceDownloadFile('${hdVideoUrl}', '${platform.toLowerCase()}_${authorUniqueId}_${videoId}_HD.mp4', this)"
+                        class="w-full btn-tiktok text-slate-950 font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-between shadow-lg"
+                    >
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-circle-down text-lg mr-2.5"></i>
+                            <span>Tải Video HD Không Logo (Tự động vượt chặn)</span>
+                        </span>
+                        <span class="bg-slate-950/25 text-slate-950 px-2.5 py-0.5 rounded-md text-xs font-black">MP4 HD</span>
+                    </button>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <button 
+                            onclick="forceDownloadFile('${sdVideoUrl}', '${platform.toLowerCase()}_${authorUniqueId}_${videoId}_SD.mp4', this)"
+                            class="w-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold py-3 px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-between transition"
+                        >
+                            <span class="flex items-center">
+                                <i class="fa-solid fa-video text-tiktok-cyan mr-2"></i>
+                                <span>Tải Video Nhanh (SD)</span>
+                            </span>
+                            <span class="bg-white/10 text-slate-300 px-2 py-0.5 rounded text-[11px]">MP4</span>
+                        </button>
+
+                        <button 
+                            onclick="openCleanStreamWindow('${hdVideoUrl}')"
+                            class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold py-3 px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-between transition"
+                            title="Mở luồng video gốc không gửi Referrer để trình duyệt tự tải hoặc nhấn giữ lưu về máy"
+                        >
+                            <span class="flex items-center">
+                                <i class="fa-solid fa-bolt text-emerald-400 mr-2"></i>
+                                <span>Tải Trực Tiếp (Luồng Dự Phòng)</span>
+                            </span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            const badgeColor = platform === 'Douyin'
+                ? 'bg-tiktok-pink/20 text-tiktok-pink border-tiktok-pink/40'
+                : 'bg-tiktok-cyan/20 text-tiktok-cyan border-tiktok-cyan/40';
+
+            container.innerHTML = `
+                <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-2xl border border-tiktok-cyan/25">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        ${mediaPreviewHtml}
+
+                        <div class="flex-grow flex flex-col justify-between space-y-5">
+                            <div class="space-y-4">
+                                <!-- Thông tin tác giả & Server -->
+                                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                                    <div class="flex items-center space-x-3 min-w-0">
+                                        <img 
+                                            src="${avatarUrl}" 
+                                            referrerpolicy="no-referrer"
+                                            alt="${authorName}" 
+                                            class="w-12 h-12 rounded-full object-cover border-2 border-tiktok-cyan shrink-0"
+                                            onerror="this.src='https://placehold.co/100x100/121622/00f2fe?text=TT'"
+                                        >
+                                        <div class="min-w-0">
+                                            <div class="flex items-center space-x-2">
+                                                <h3 class="font-bold text-white text-base truncate">${authorName}</h3>
+                                                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${badgeColor}">${escapeHtml(platform)}</span>
+                                            </div>
+                                            <p class="text-xs text-tiktok-cyan font-medium truncate">ID: ${authorUniqueId}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                            <i class="fa-solid fa-server mr-1"></i> ${serverUsed}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Caption & Nút Copy -->
+                                <div class="bg-slate-950/80 border border-white/10 rounded-xl p-3.5 space-y-2">
+                                    <div class="flex items-center justify-between text-xs text-slate-400">
+                                        <span class="font-medium"><i class="fa-solid fa-quote-left text-tiktok-pink mr-1.5"></i>Caption / Tiêu đề gốc:</span>
+                                        <button 
+                                            onclick="copyTextToClipboard(${JSON.stringify(caption).replace(/"/g, '&quot;')}, 'Đã sao chép Caption!')"
+                                            class="text-tiktok-cyan hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-md transition flex items-center font-medium"
+                                        >
+                                            <i class="fa-regular fa-copy mr-1"></i> Copy Caption
+                                        </button>
+                                    </div>
+                                    <p class="text-xs sm:text-sm text-slate-200 line-clamp-3 leading-relaxed select-all">${safeCaption}</p>
+                                </div>
+
+                                <!-- Thống kê tương tác -->
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    <div class="glass-card p-2.5 rounded-xl text-center">
+                                        <div class="text-xs text-slate-400"><i class="fa-solid fa-play text-tiktok-cyan mr-1"></i>Lượt xem</div>
+                                        <div class="font-extrabold text-sm text-white mt-0.5">${formatNumber(data.play_count)}</div>
+                                    </div>
+                                    <div class="glass-card p-2.5 rounded-xl text-center">
+                                        <div class="text-xs text-slate-400"><i class="fa-solid fa-heart text-tiktok-pink mr-1"></i>Thả tim</div>
+                                        <div class="font-extrabold text-sm text-white mt-0.5">${formatNumber(data.digg_count)}</div>
+                                    </div>
+                                    <div class="glass-card p-2.5 rounded-xl text-center">
+                                        <div class="text-xs text-slate-400"><i class="fa-solid fa-comment-dots text-amber-400 mr-1"></i>Bình luận</div>
+                                        <div class="font-extrabold text-sm text-white mt-0.5">${formatNumber(data.comment_count)}</div>
+                                    </div>
+                                    <div class="glass-card p-2.5 rounded-xl text-center">
+                                        <div class="text-xs text-slate-400"><i class="fa-solid fa-share text-emerald-400 mr-1"></i>Chia sẻ</div>
+                                        <div class="font-extrabold text-sm text-white mt-0.5">${formatNumber(data.share_count)}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Các nút tải về -->
+                            <div class="space-y-2.5 pt-2">
+                                ${downloadButtonsHtml}
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    ${musicUrl ? `
+                                    <button 
+                                        onclick="forceDownloadFile('${musicUrl}', '${platform.toLowerCase()}_audio_${authorUniqueId}_${videoId}.mp3', this)"
+                                        class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 transition"
+                                    >
+                                        <i class="fa-solid fa-music text-tiktok-pink"></i>
+                                        <span>Tải Nhạc Nền (MP3)</span>
+                                    </button>
+                                    ` : ''}
+
+                                    <button 
+                                        onclick="forceDownloadFile('${coverUrl}', '${platform.toLowerCase()}_cover_${authorUniqueId}_${videoId}.jpg', this)"
+                                        class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 font-semibold py-2.5 px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 transition"
+                                    >
+                                        <i class="fa-regular fa-image text-purple-400"></i>
+                                        <span>Tải Ảnh Bìa (Cover)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.classList.remove('hidden');
+        }
+
+        // ============================================================================
+        // 5. TRÌNH TẢI FILE ĐA ĐƯỜNG HẦM (DIRECT -> PROXY TUNNEL -> NO-REFERRER STREAM)
+        // ============================================================================
+        async function forceDownloadFile(fileUrl, fileName, buttonEl = null) {
+            if (!fileUrl) {
+                showToast('Không tìm thấy đường dẫn tệp!', 'error');
+                return;
+            }
+
+            let originalBtnHtml = '';
+            if (buttonEl) {
+                originalBtnHtml = buttonEl.innerHTML;
+                buttonEl.disabled = true;
+                buttonEl.classList.add('opacity-80', 'cursor-wait');
+                buttonEl.innerHTML = `<span class="flex items-center justify-center w-full"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang kết nối luồng tải...</span>`;
+            }
+
+            // Danh sách các đường hầm tải file:
+            // 1. Tải trực tiếp với referrerPolicy: 'no-referrer'
+            // 2. Đi qua đường hầm corsproxy.io (Vượt lỗi CORS của Douyin CDN / TikTok CDN)
+            // 3. Đi qua đường hầm codetabs proxy
+            const downloadTunnels = [
+                { name: 'Trực tiếp', url: fileUrl },
+                { name: 'Tunnel 1', url: `https://corsproxy.io/?${encodeURIComponent(fileUrl)}` },
+                { name: 'Tunnel 2', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fileUrl)}` }
+            ];
+
+            let downloadedSuccess = false;
+
+            for (let t = 0; t < downloadTunnels.length; t++) {
+                const tunnel = downloadTunnels[t];
+                try {
+                    if (buttonEl && t > 0) {
+                        buttonEl.innerHTML = `<span class="flex items-center justify-center w-full"><i class="fa-solid fa-shield-halved fa-spin mr-2"></i> Đang tải qua ${tunnel.name}...</span>`;
+                    }
+
+                    const response = await fetchWithTimeout(tunnel.url, {
+                        referrerPolicy: 'no-referrer'
+                    }, 22000);
+
+                    if (!response.ok) continue;
+
+                    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                    if (contentType.includes('text/html') || contentType.includes('application/json')) {
+                        // Tránh tải nhầm trang báo lỗi HTML
+                        continue;
+                    }
+
+                    const contentLength = response.headers.get('content-length');
+                    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+                    if (response.body && totalBytes > 0 && buttonEl) {
+                        const reader = response.body.getReader();
+                        let receivedBytes = 0;
+                        const chunks = [];
+
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            chunks.push(value);
+                            receivedBytes += value.length;
+                            const percent = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+                            buttonEl.innerHTML = `<span class="flex items-center justify-center w-full"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Đang tải về máy (${percent}%)...</span>`;
+                        }
+
+                        const blob = new Blob(chunks, { type: fileName.endsWith('.mp3') ? 'audio/mpeg' : (fileName.endsWith('.jpg') ? 'image/jpeg' : 'video/mp4') });
+                        if (blob.size < 1000) continue; // Bỏ qua nếu file rỗng
+                        triggerBrowserDownload(blob, fileName);
+                        downloadedSuccess = true;
+                        break;
+                    } else {
+                        const blob = await response.blob();
+                        if (blob.size < 1000) continue;
+                        triggerBrowserDownload(blob, fileName);
+                        downloadedSuccess = true;
+                        break;
+                    }
+                } catch (err) {
+                    // Tự động chuyển sang đường hầm tiếp theo
+                }
+            }
+
+            if (downloadedSuccess) {
+                showToast(`Đã tải xuống thành công: ${fileName}`, 'success');
+            } else {
+                // Phương án C đảm bảo 100%: Mở luồng sạch với rel="noreferrer" để trình duyệt xử lý gốc
+                openCleanStreamWindow(fileUrl);
+            }
+
+            if (buttonEl) {
+                buttonEl.disabled = false;
+                buttonEl.classList.remove('opacity-80', 'cursor-wait');
+                buttonEl.innerHTML = originalBtnHtml;
+            }
+        }
+
+        // Mở luồng video sạch không gửi Referrer (Vượt chặn 403 của Douyin aweme.snssdk.com & douyinvod.com)
+        function openCleanStreamWindow(streamUrl) {
+            if (!streamUrl) return;
+            const a = document.createElement('a');
+            a.href = streamUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.referrerPolicy = 'no-referrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Đã mở luồng Video gốc! Hãy bấm biểu tượng ⋮ (góc dưới video) hoặc Chuột phải -> "Lưu video thành..." để lưu về máy.', 'info');
+        }
+
+        function triggerBrowserDownload(blob, fileName) {
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 6000);
+        }
+
+        async function downloadAllSlides(imageUrls, prefix) {
+            if (!Array.isArray(imageUrls) || imageUrls.length === 0) return;
+            showToast(`Đang tải lần lượt ${imageUrls.length} ảnh...`, 'info');
+            for (let i = 0; i < imageUrls.length; i++) {
+                await forceDownloadFile(normalizeMediaUrl(imageUrls[i]), `slide_${prefix}_${i + 1}.jpg`);
+            }
+        }
+
+        // ============================================================================
+        // 6. LỌC SẠCH CHỮ THỪA & TẢI HÀNG LOẠT (BULK MODE)
+        // ============================================================================
+        function cleanBulkTextarea(notify = true) {
+            const bulkEl = document.getElementById('bulkUrlInput');
+            const statusEl = document.getElementById('bulkProgressStatus');
+            const urls = extractAllCleanUrls(bulkEl.value);
+
+            if (urls.length > 0) {
+                bulkEl.value = urls.join('\n');
+                statusEl.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> Đã lọc sạch chữ thừa! Thu được ${urls.length} đường link gốc.</span>`;
+                if (notify) showToast(`Đã lọc sạch và giữ lại ${urls.length} link!`, 'success');
+            } else if (notify) {
+                showToast('Không tìm thấy đường link hợp lệ nào trong văn bản!', 'warning');
+            }
+            return urls;
+        }
+
+        function copyAllBulkCleanUrls() {
+            const urls = cleanBulkTextarea(false);
+            if (urls.length === 0) {
+                showToast('Chưa có link nào để sao chép!', 'warning');
+                return;
+            }
+            copyTextToClipboard(urls.join('\n'), `Đã sao chép toàn bộ ${urls.length} link sạch!`);
+        }
+
+        function clearBulkInput() {
+            document.getElementById('bulkUrlInput').value = '';
+            document.getElementById('bulkResultList').innerHTML = '';
+            document.getElementById('bulkProgressStatus').textContent = 'Đã xoá trắng danh sách.';
+        }
+
+        async function processBulkUrls() {
+            const uniqueUrls = cleanBulkTextarea(false);
+            if (uniqueUrls.length === 0) {
+                showToast('Vui lòng dán ít nhất 1 đoạn văn bản chứa link TikTok hoặc Douyin!', 'warning');
+                return;
+            }
+
+            const btnBulk = document.getElementById('btnSubmitBulk');
+            const statusEl = document.getElementById('bulkProgressStatus');
+            const listContainer = document.getElementById('bulkResultList');
+
+            btnBulk.disabled = true;
+            btnBulk.classList.add('opacity-60', 'cursor-not-allowed');
+            listContainer.innerHTML = '';
+
+            let successCount = 0;
+
+            for (let i = 0; i < uniqueUrls.length; i++) {
+                const url = uniqueUrls[i];
+                statusEl.innerHTML = `<span class="text-tiktok-cyan font-semibold"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Đang bóc tách đa luồng link ${i + 1}/${uniqueUrls.length}...</span>`;
+
+                const itemCard = document.createElement('div');
+                itemCard.className = 'glass-panel p-4 rounded-xl border border-white/10 transition';
+                itemCard.innerHTML = `
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span class="truncate max-w-md"><i class="fa-solid fa-circle-notch fa-spin text-tiktok-cyan mr-2"></i>Đang xử lý: ${escapeHtml(url)}</span>
+                        <span>#${i + 1}</span>
+                    </div>
+                `;
+                listContainer.appendChild(itemCard);
+
+                try {
+                    const data = await fetchMediaMultiEngine(url);
+                    successCount++;
+                    saveToHistory(data);
+                    renderBulkItemSuccess(itemCard, data, i + 1);
+                } catch (err) {
+                    itemCard.innerHTML = `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div class="text-amber-300 truncate">
+                                <i class="fa-solid fa-check-circle text-emerald-400 mr-1.5"></i>Link sạch: <strong class="font-mono text-white">${escapeHtml(url)}</strong>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <button onclick="copyTextToClipboard('${escapeHtml(url)}', 'Đã copy link sạch!')" class="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white">Copy link</button>
+                                <a href="https://snapdouyin.app/vi" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-tiktok-pink/20 text-tiktok-pink font-semibold">Cổng Dự Phòng</a>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (i < uniqueUrls.length - 1) {
+                    await new Promise(r => setTimeout(r, 350));
+                }
+            }
+
+            statusEl.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-double mr-1"></i> Hoàn tất xử lý ${uniqueUrls.length} link (Tải trực tiếp ${successCount} video).</span>`;
+            btnBulk.disabled = false;
+            btnBulk.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+
+        function renderBulkItemSuccess(cardEl, data, index) {
+            const isSlideshow = Array.isArray(data.images) && data.images.length > 0;
+            const platform = data.platform || detectPlatform(data.originalInputUrl) || 'TikTok';
+            const authorUniqueId = escapeHtml(data.author?.unique_id || 'user');
+            const authorName = escapeHtml(data.author?.nickname || 'Creator');
+            const coverUrl = normalizeMediaUrl(data.origin_cover || data.cover);
+            const hdVideoUrl = normalizeMediaUrl(data.hdplay || data.play);
+            const musicUrl = normalizeMediaUrl(data.music);
+            const caption = escapeHtml(data.title || 'Không có tiêu đề');
+            const videoId = data.id || Date.now();
+
+            cardEl.innerHTML = `
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3.5 min-w-0 flex-grow">
+                        <div class="relative w-14 h-16 rounded-lg overflow-hidden bg-black shrink-0 border border-white/10">
+                            <img src="${coverUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="Cover" onerror="this.src='https://placehold.co/80x100/121622/00f2fe?text=Video'">
+                            <span class="absolute bottom-0.5 right-0.5 bg-black/80 text-[9px] font-bold px-1 rounded text-white">#${index}</span>
+                        </div>
+                        <div class="min-w-0 flex-grow space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-sm text-white truncate">${authorName}</span>
+                                <span class="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-tiktok-cyan font-bold">${escapeHtml(platform)}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 truncate">${caption}</p>
+                            <p class="text-[11px] font-mono text-emerald-400 truncate">${escapeHtml(data.originalInputUrl)}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                        ${isSlideshow ? `
+                            <button 
+                                onclick="downloadAllSlides(${JSON.stringify(data.images).replace(/"/g, '&quot;')}, '${authorUniqueId}_${videoId}')"
+                                class="flex-1 sm:flex-initial btn-tiktok text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-lg flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-images mr-1.5"></i> Tải ${data.images.length} Ảnh
+                            </button>
+                        ` : `
+                            <button 
+                                onclick="forceDownloadFile('${hdVideoUrl}', '${platform.toLowerCase()}_${authorUniqueId}_${videoId}_HD.mp4', this)"
+                                class="flex-1 sm:flex-initial btn-tiktok text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-lg flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-download mr-1.5"></i> Tải MP4 HD
+                            </button>
+                        `}
+                        ${musicUrl ? `
+                        <button 
+                            onclick="forceDownloadFile('${musicUrl}', '${platform.toLowerCase()}_audio_${authorUniqueId}_${videoId}.mp3', this)"
+                            class="bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-3 py-2.5 rounded-lg transition"
+                            title="Tải nhạc MP3"
+                        >
+                            <i class="fa-solid fa-music"></i>
+                        </button>
+                        ` : ''}
+                        <button 
+                            onclick="analyzeSingleUrl('${escapeHtml(data.originalInputUrl)}')"
+                            class="bg-white/10 hover:bg-white/20 text-tiktok-cyan text-xs font-medium px-3 py-2.5 rounded-lg transition"
+                            title="Xem chi tiết"
+                        >
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================================================
+        // 7. LỊCH SỬ TẢI GẦN ĐÂY (LOCALSTORAGE)
+        // ============================================================================
+        function getHistory() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveToHistory(data) {
+            if (!data) return;
+            let history = getHistory();
+            const cleanUrl = data.originalInputUrl || '';
+
+            const item = {
+                id: data.id || Date.now(),
+                platform: data.platform || detectPlatform(cleanUrl) || 'TikTok',
+                title: data.title || 'Không có mô tả',
+                authorName: data.author?.nickname || 'Creator',
+                authorId: data.author?.unique_id || 'user',
+                cover: normalizeMediaUrl(data.origin_cover || data.cover),
+                hdVideoUrl: normalizeMediaUrl(data.hdplay || data.play),
+                isSlideshow: Array.isArray(data.images) && data.images.length > 0,
+                playCount: data.play_count || 0,
+                originalUrl: cleanUrl,
+                savedAt: Date.now()
+            };
+
+            history = history.filter(h => String(h.id) !== String(item.id) && h.originalUrl !== item.originalUrl);
+            history.unshift(item);
+            if (history.length > 16) history = history.slice(0, 16);
+
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            } catch (e) {}
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = getHistory();
+            const grid = document.getElementById('historyGrid');
+            const countText = document.getElementById('historyCountText');
+            const badge = document.getElementById('historyBadge');
+            const btnClear = document.getElementById('btnClearHistory');
+
+            countText.textContent = history.length;
+            badge.textContent = history.length;
+
+            if (history.length > 0) {
+                btnClear.classList.remove('hidden');
+                btnClear.classList.add('flex');
+            } else {
+                btnClear.classList.add('hidden');
+                btnClear.classList.remove('flex');
+                grid.innerHTML = `
+                    <div class="col-span-full glass-card rounded-2xl p-8 text-center text-slate-400 text-xs sm:text-sm">
+                        <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 text-slate-500 block"></i>
+                        Chưa có lịch sử. Các link TikTok & Douyin sau khi lọc và phân tích sẽ được lưu tại đây.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = history.map(item => `
+                <div class="glass-card rounded-xl p-3 flex items-center space-x-3 border border-white/5 hover:border-tiktok-cyan/30 transition group">
+                    <div class="relative w-16 h-20 rounded-lg overflow-hidden bg-black shrink-0 cursor-pointer" onclick="analyzeSingleUrl('${escapeHtml(item.originalUrl)}')">
+                        <img 
+                            src="${escapeHtml(item.cover)}" 
+                            referrerpolicy="no-referrer"
+                            alt="${escapeHtml(item.authorName)}" 
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            onerror="this.src='https://placehold.co/100x120/121622/00f2fe?text=${escapeHtml(item.platform)}'"
+                        >
+                    </div>
+
+                    <div class="min-w-0 flex-grow space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-tiktok-cyan truncate">${escapeHtml(item.authorName)} <span class="text-[10px] text-slate-400">(${escapeHtml(item.platform)})</span></span>
+                            <button onclick="removeHistoryItem('${escapeHtml(item.id)}')" class="text-slate-500 hover:text-rose-400 text-xs" title="Xoá">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-200 line-clamp-1 font-medium">${escapeHtml(item.title)}</p>
+                        <p class="text-[11px] font-mono text-emerald-400 truncate">${escapeHtml(item.originalUrl)}</p>
+                        <div class="flex items-center justify-end space-x-1.5 pt-1">
+                            <button 
+                                onclick="copyTextToClipboard('${escapeHtml(item.originalUrl)}', 'Đã copy link sạch!')"
+                                class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[11px] font-medium text-slate-200 transition"
+                            >
+                                Copy link
+                            </button>
+                            <button 
+                                onclick="analyzeSingleUrl('${escapeHtml(item.originalUrl)}')"
+                                class="px-2.5 py-1 rounded bg-tiktok-cyan/20 hover:bg-tiktok-cyan/30 text-[11px] font-bold text-tiktok-cyan transition"
+                            >
+                                Tải lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeHistoryItem(id) {
+            let history = getHistory().filter(item => String(item.id) !== String(id));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            renderHistory();
+            showToast('Đã xoá khỏi lịch sử.', 'info');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistory();
+            showToast('Đã xoá toàn bộ lịch sử!', 'success');
+        }
+    </script>
+</body>
+</html>
